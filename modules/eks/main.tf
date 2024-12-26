@@ -35,9 +35,9 @@ resource "aws_eks_node_group" "group12_node" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.cloudquicklabs-AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.cloudquicklabs-AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.cloudquicklabs-AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role_policy_attachment.group12_role1-AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.group12_role1-AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.group12_role1-AmazonEC2ContainerRegistryReadOnly,
   ]
 }
 
