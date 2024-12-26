@@ -1,0 +1,67 @@
+name: "Apply_TF_Plan"
+on:
+  workflow_call:
+    inputs:
+      tf_version:
+        description: 'Specifies version of Terraform to use. e.g: 1.1.0 Default=latest.'
+        required: false
+        type: string
+        default: latest
+
+permissions:
+  id-token: write   
+  contents: read   
+jobs:
+  apply-plan:
+    runs-on: ubuntu-latest
+    environment: aws
+    env: 
+      ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY_ID}}
+      SECRET_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+      AWS_REGION: us-east-1
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.2
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          aws-access-key-id: ${{ env.ACCESS_KEY }}
+          aws-secret-access-key: ${{ env.SECRET_KEY }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::357171621133:role/github-oidc-role
+          role-session-name: samplerolesession
+          aws-region: us-west-2
+
+      - name: Print AWS SSM Parameter
+        run: aws ssm get-parameter --name=hello_aws-gh-oidc --query Parameter.Value
+
+      - name: Print assumed role
+        run: aws sts get-caller-identity
